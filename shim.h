@@ -125,6 +125,6 @@ extern VOID ClearErrors(VOID);
 #include "shim_cert.h"
 #endif
 
-#define LogError(fmt, ...) LogError(__FILE__, __LINE__, __func__, fmt, ## __VA_ARGS__)
+#define LogError(fmt, ...) LogError("shim.c", __LINE__, __func__, fmt, ## __VA_ARGS__)
 
 #endif /* SHIM_H_ */
