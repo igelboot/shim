@@ -200,7 +200,7 @@ shim_cert.h: shim.cer
 
 version.c : $(TOPDIR)/version.c.in
 	sed	-e "s,@@VERSION@@,$(VERSION)," \
-		-e "s,@@UNAME@@,$(shell uname -a)," \
+		-e "s,@@UNAME@@,IGEL Xenial Build Server," \
 		-e "s,@@COMMIT@@,$(COMMITID)," \
 		< $< > $@
 
