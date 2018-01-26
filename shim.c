@@ -1510,6 +1510,9 @@ static EFI_STATUS handle_image (void *data, unsigned int datasize,
 static int
 should_use_fallback(EFI_HANDLE image_handle)
 {
+        /* gottwald@igel.com do not use fallback */
+#ifndef NO_FALLBACK
+
 	EFI_GUID loaded_image_protocol = LOADED_IMAGE_PROTOCOL;
 	EFI_LOADED_IMAGE *li;
 	unsigned int pathlen = 0;
@@ -1579,6 +1582,9 @@ error:
 		FreePool(bootpath);
 
 	return ret;
+#else /* NO_FALLBACK */
+	return 0;
+#endif /* NO_FALLBACK */
 }
 
 /*
@@ -1976,6 +1982,8 @@ EFI_STATUS init_grub(EFI_HANDLE image_handle)
 	int use_fb = should_use_fallback(image_handle);
 
 	efi_status = start_image(image_handle, use_fb ? FALLBACK :second_stage);
+        /* gottwald@igel.com do not try to use MOK_MANAGER for now */
+#ifndef NO_MOK_MANAGER
 	if (efi_status == EFI_SECURITY_VIOLATION ||
 	    efi_status == EFI_ACCESS_DENIED) {
 		efi_status = start_image(image_handle, MOK_MANAGER);
@@ -1988,6 +1996,7 @@ EFI_STATUS init_grub(EFI_HANDLE image_handle)
 		efi_status = start_image(image_handle,
 					 use_fb ? FALLBACK : second_stage);
 	}
+#endif /* NO_MOK_MANAGER */
 
 	if (efi_status != EFI_SUCCESS) {
 		Print(L"start_image() returned %r\n", efi_status);

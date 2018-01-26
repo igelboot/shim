@@ -124,6 +124,12 @@ BOOTCSVNAME	?= BOOT$(ARCH_SUFFIX_UPPER).CSV
 
 CFLAGS += "-DEFI_ARCH=L\"$(ARCH_SUFFIX)\"" "-DDEBUGDIR=L\"/usr/lib/debug/usr/share/shim/$(ARCH_SUFFIX)-$(VERSION)$(DASHRELEASE)/\""
 
+ifeq ($(NO_MOK_MANAGER), true)
+	CFLAGS += -DNO_MOK_MANAGER
+endif
+ifeq ($(NO_FALLBACK), true)
+	CFLAGS += -DNO_FALLBACK
+endif
 ifneq ($(origin VENDOR_CERT_FILE), undefined)
 	CFLAGS += -DVENDOR_CERT_FILE=\"$(VENDOR_CERT_FILE)\"
 endif
@@ -134,15 +140,31 @@ endif
 LDFLAGS		= --hash-style=sysv -nostdlib -znocombreloc -T $(EFI_LDS) -shared -Bsymbolic -L$(EFI_PATH) -L$(LIBDIR) -LCryptlib -LCryptlib/OpenSSL $(EFI_CRT_OBJS) --build-id=sha1 $(ARCH_LDFLAGS) --no-undefined
 
 TARGETS	= $(SHIMNAME)
-TARGETS += $(SHIMNAME).debug $(MMNAME).debug $(FBNAME).debug
+TARGETS += $(SHIMNAME).debug
+ifneq ($(NO_MOK_MANAGER), true)
+	TARGETS += $(MMNAME).debug
+endif
+ifneq ($(NO_FALLBACK), true)
+	TARGETS += $(FBNAME).debug
+endif
 ifneq ($(origin ENABLE_SHIM_HASH),undefined)
 TARGETS += $(SHIMHASHNAME)
 endif
 ifneq ($(origin ENABLE_SHIM_CERT),undefined)
-TARGETS	+= $(MMNAME).signed $(FBNAME).signed
+ifneq ($(NO_MOK_MANAGER), true)
+	TARGETS	+= $(MMNAME).signed
+endif
+ifneq ($(NO_FALLBACK), true)
+	TARGETS	+= $(FBNAME).signed
+endif
 CFLAGS += -DENABLE_SHIM_CERT
 else
-TARGETS += $(MMNAME) $(FBNAME)
+ifneq ($(NO_MOK_MANAGER), true)
+	TARGETS	+= $(MMNAME)
+endif
+ifneq ($(NO_FALLBACK), true)
+	TARGETS	+= $(FBNAME)
+endif
 endif
 OBJS	= shim.o netboot.o cert.o replacements.o tpm.o version.o errlog.o
 KEYS	= shim_cert.h ocsp.* ca.* shim.crt shim.csr shim.p12 shim.pem shim.key shim.cer
@@ -196,8 +218,12 @@ cert.o : $(TOPDIR)/cert.S
 	$(CC) $(CFLAGS) -c -o $@ $<
 
 $(SHIMNAME) : $(SHIMSONAME)
-$(MMNAME) : $(MMSONAME)
-$(FBNAME) : $(FBSONAME)
+ifneq ($(NO_MOK_MANAGER), true)
+	$(MMNAME) : $(MMSONAME)
+endif
+ifneq ($(NO_FALLBACK), true)
+	$(FBNAME) : $(FBSONAME)
+endif
 
 $(SHIMSONAME): $(OBJS) Cryptlib/libcryptlib.a Cryptlib/OpenSSL/libopenssl.a lib/lib.a
 	$(LD) -o $@ $(LDFLAGS) $^ $(EFI_LIBS)
@@ -240,7 +266,13 @@ ifeq ($(origin EFIDIR),undefined)
 endif
 
 install-deps : $(TARGETS)
-install-deps : $(SHIMNAME).debug $(MMNAME).debug $(FBNAME).debug buildid
+ifneq ($(NO_MOK_MANAGER), true)
+	install-deps : $(MMNAME).debug
+endif
+ifneq ($(NO_FALLBACK), true)
+	install-deps : $(FBNAME).debug
+endif
+install-deps : $(SHIMNAME).debug buildid
 install-deps : $(BOOTCSVNAME)
 
 install-debugsource : install-deps
@@ -273,13 +305,21 @@ install : install-deps install-debuginfo install-debugsource
 	$(INSTALL) -m 0644 $(SHIMNAME) $(DESTDIR)/$(TARGETDIR)/
 	$(INSTALL) -m 0644 $(BOOTCSVNAME) $(DESTDIR)/$(TARGETDIR)/
 ifneq ($(origin ENABLE_SHIM_CERT),undefined)
+ifneq ($(NO_FALLBACK), true)
 	$(INSTALL) -m 0644 $(FBNAME).signed $(DESTDIR)/$(EFIBOOTDIR)/$(FBNAME)
+endif
+ifneq ($(NO_MOK_MANAGER), true)
 	$(INSTALL) -m 0644 $(MMNAME).signed $(DESTDIR)/$(EFIBOOTDIR)/$(MMNAME)
 	$(INSTALL) -m 0644 $(MMNAME).signed $(DESTDIR)/$(TARGETDIR)/$(MMNAME)
+endif
 else
+ifneq ($(NO_FALLBACK), true)
 	$(INSTALL) -m 0644 $(FBNAME) $(DESTDIR)/$(EFIBOOTDIR)/
+endif
+ifneq ($(NO_MOK_MANAGER), true)
 	$(INSTALL) -m 0644 $(MMNAME) $(DESTDIR)/$(EFIBOOTDIR)/
 	$(INSTALL) -m 0644 $(MMNAME) $(DESTDIR)/$(TARGETDIR)/
+endif
 endif
 
 install-as-data : install-deps
@@ -289,11 +329,19 @@ ifneq ($(origin ENABLE_SHIM_HASH),undefined)
 	$(INSTALL) -m 0644 $(SHIMHASHNAME) $(DESTDIR)/$(DATATARGETDIR)/
 endif
 ifneq ($(origin ENABLE_SHIM_CERT),undefined)
+ifneq ($(NO_MOK_MANAGER), true)
 	$(INSTALL) -m 0644 $(MMNAME).signed $(DESTDIR)/$(DATATARGETDIR)/$(MMNAME)
+endif
+ifneq ($(NO_FALLBACK), true)
 	$(INSTALL) -m 0644 $(FBNAME).signed $(DESTDIR)/$(DATATARGETDIR)/$(FBNAME)
+endif
 else
+ifneq ($(NO_MOK_MANAGER), true)
 	$(INSTALL) -m 0644 $(MMNAME) $(DESTDIR)/$(DATATARGETDIR)/$(MMNAME)
+endif
+ifneq ($(NO_FALLBACK), true)
 	$(INSTALL) -m 0644 $(FBNAME) $(DESTDIR)/$(DATATARGETDIR)/$(FBNAME)
+endif
 endif
 
 %.efi: %.so
