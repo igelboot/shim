@@ -14,6 +14,7 @@ VPATH		= $(TOPDIR)
 CC		= $(CROSS_COMPILE)gcc
 LD		= $(CROSS_COMPILE)ld
 OBJCOPY		= $(CROSS_COMPILE)objcopy
+SHELL		:= /bin/bash
 OPENSSL		?= openssl
 HEXDUMP		?= hexdump
 INSTALL		?= install
