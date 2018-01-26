@@ -226,8 +226,16 @@ ifneq ($(NO_FALLBACK), true)
 	$(FBNAME) : $(FBSONAME)
 endif
 
-$(SHIMSONAME): $(OBJS) Cryptlib/libcryptlib.a Cryptlib/OpenSSL/libopenssl.a lib/lib.a
+$(SHIMSONAME): $(OBJS) Cryptlib/libcryptlib.a Cryptlib/OpenSSL/libopenssl.a lib/lib.a 
+ifeq ($(ARCH),ia32)
+ifneq (,$(findstring /x86_64-linux,$(shell $(CC) -print-libgcc-file-name))) 
+	$(LD) -o $@ $(LDFLAGS) $^ $(EFI_LIBS) $(shell $(CC) -m32 -print-libgcc-file-name)
+else
 	$(LD) -o $@ $(LDFLAGS) $^ $(EFI_LIBS)
+endif
+else
+	$(LD) -o $@ $(LDFLAGS) $^ $(EFI_LIBS)
+endif
 
 fallback.o: $(FALLBACK_SRCS)
 
