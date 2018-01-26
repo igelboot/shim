@@ -59,8 +59,8 @@ extern "C" {
 #ifndef OPENSSL_NO_ENGINES
 # define OPENSSL_NO_ENGINES
 #endif
-#ifdef OPENSSL_NO_FILENAMES
-# undef OPENSSL_NO_FILENAMES
+#ifndef OPENSSL_NO_FILENAMES
+# define OPENSSL_NO_FILENAMES
 #endif
 #ifndef OPENSSL_NO_FP_API
 # define OPENSSL_NO_FP_API

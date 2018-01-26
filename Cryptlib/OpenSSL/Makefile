@@ -7,8 +7,7 @@ CFLAGS		= -ggdb -O0 -I$(TOPDIR) -I$(TOPDIR)/.. -I$(TOPDIR)/../Include/ -I$(TOPDI
 		  -fno-stack-protector -fno-strict-aliasing -fpic -fshort-wchar -nostdinc \
 		  -ffreestanding -std=gnu89 -I$(shell $(CC) -print-file-name=include) \
 		  -Wall $(EFI_INCLUDES) -DL_ENDIAN -D_CRT_SECURE_NO_DEPRECATE \
-		  -D_CRT_NONSTDC_NO_DEPRECATE -DOPENSSL_SMALL_FOOTPRINT -DPEDANTIC \
-		  -DOPENSSL_NO_FILENAMES
+		  -D_CRT_NONSTDC_NO_DEPRECATE -DOPENSSL_SMALL_FOOTPRINT -DPEDANTIC
 
 ifeq ($(ARCH),x86_64)
 	CFLAGS	+= -mno-mmx -mno-sse -mno-red-zone -maccumulate-outgoing-args \
